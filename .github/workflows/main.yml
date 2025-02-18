@@ -1,1 +1,57 @@
+name: Automated Workflow
 
+on:
+  # schedule:
+    # - cron: '0 0 * * *'
+  workflow_dispatch:
+  push:
+
+jobs:
+  automate_process:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+
+    steps:
+      - name: Check Code
+        uses: actions/checkout@v4
+
+      - name: Terminate Previous Runs
+        uses: styfle/cancel-workflow-action@0.12.1
+        with:
+          all_but_latest: true
+          access_token: ${{ github.token }}
+
+      - name: Configure Git
+        continue-on-error: true
+        run: |
+          git config --global user.name ${{ secrets.GIT_NAME }}
+          git config --global user.email ${{ secrets.GIT_EMAIL }}
+          git config --global credential.helper store
+          echo https://${{ secrets.GIT_NAME }}:${{ secrets.GIT_TOKEN }}@github.com > ~/.git-credentials
+
+      - name: Clone Repository
+        continue-on-error: true
+        run: |
+          git clone -b one https://${{ secrets.GIT_NAME }}:${{ secrets.GIT_TOKEN }}@${{ secrets.BOT_REPO }} ${{ secrets.GIT_NAME }}
+
+      - name: Build and Execute Docker
+        timeout-minutes: 24
+        continue-on-error: false
+        run: |
+          cd ${{ secrets.GIT_NAME }}
+          docker build . -t tetris
+          docker run tetris
+
+      - name: Loop Workflow Process
+        continue-on-error: true
+        run: |
+          git clone -b main https://github.com/${{ github.repository }} loop
+          cd loop || exit 1
+          echo $(( RANDOM - ( RANDOM % RANDOM ) )) > looper.txt
+          git add looper.txt
+          git commit -m "Automated Workflow: Loop at $(date -u +%D-%T%P)"
+          git push -q https://${{ secrets.SUPER_TOKEN }}@github.com/${{ github.repository }} HEAD:main
