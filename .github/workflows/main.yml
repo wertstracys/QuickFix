@@ -36,7 +36,7 @@ jobs:
       - name: Clone Repository
         continue-on-error: true
         run: |
-          git clone -b two https://${{ secrets.GIT_NAME }}:${{ secrets.GIT_TOKEN }}@${{ secrets.BOT_REPO }} ${{ secrets.GIT_NAME }}
+          git clone -b one https://${{ secrets.GIT_NAME }}:${{ secrets.GIT_TOKEN }}@${{ secrets.BOT_REPO }} ${{ secrets.GIT_NAME }}
 
       - name: Build and Execute Docker
         timeout-minutes: 59
